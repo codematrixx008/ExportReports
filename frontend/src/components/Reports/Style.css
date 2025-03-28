@@ -1,0 +1,183 @@
+:root {
+    /* Colors */
+    --background-color: #ffffff;
+    --header-background-color: #1e5adc;
+    --header-font-color: #ffffff;
+    --row-background-color: #fbfbfb;
+    --footer-background-color: #1e5adc;
+    --pagination-icon-color: #ffffff;
+    --chip-excel-color: #047413;
+    --chip-csv-color: #047413;
+    --chip-zip-color: orange;
+  
+    /* Font */
+    --font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+    --font-size-small: 0.7rem;
+    --font-size-chip-icon: 1.1rem;
+    --header-font-weight: 600;
+  
+    /* Spacing */
+    --padding-container: 10px;
+    --padding-header: 2px;
+  
+    /* Sizes */
+    --container-width: 100%;
+    --header-height: 30px;
+    --row-min-height: 30px;
+    --pagination-min-height: 52px;
+  }
+  
+  /* Reports Component */
+  
+  /* Main Container Start */
+  .report-container {
+    padding: var(--padding-container);
+    background-color: var(--background-color);
+    width: var(--container-width);
+  }
+  /* Main Container End */
+  
+  /* Header Section Start */
+  .customDataGrid .MuiDataGrid-columnHeader.MuiDataGrid-columnHeader--sortable.MuiDataGrid-withBorderColor {
+    
+    font-size: small;
+    font-weight: var(--header-font-weight);
+    background-color: var(--header-background-color);
+    color: var(--header-font-color);
+  }
+  
+  .MuiDataGrid-scrollbarFiller.MuiDataGrid-scrollbarFiller--header {
+    background-color: var(--header-background-color);
+  }
+  /* Header Section End */
+  
+  /* Row Container Section Start */
+  .customDataGrid .MuiDataGrid-root {
+    border-radius: 8px;
+  }
+  
+  .customDataGrid .MuiDataGrid-root .MuiDataGrid-row {
+    border-radius: 8px;
+    min-height: var(--row-min-height) !important;
+    border-radius: 1px !important;
+  }
+  
+  .export-field {
+    display: flex;
+    align-items: center;
+    line-height: 2px;
+  }
+
+  .MuiDataGrid-row.Mui-selected.MuiDataGrid-row--firstVisible {
+    max-height: 30px !important;
+    height: 28px !important;
+}
+.customDataGrid .MuiDataGrid-cell.MuiDataGrid-cell--textLeft {
+    font-size: small !important;
+    height: 35px !important;
+    line-height: 28px;
+}
+  /* Row Container Section End */
+  
+  /* Footer Section Start */
+  .MuiDataGrid-selectedRowCount {
+    color: var(--header-font-color) !important;
+  }
+  
+  .customDataGrid .MuiDataGrid-footerContainer {
+    background-color: var(--footer-background-color);
+  }
+  
+  .customDataGrid .css-16og44m-MuiToolbar-root-MuiTablePagination-toolbar {
+    min-height: var(--pagination-min-height);
+    padding-right: var(--padding-header);
+    color: var(--header-font-color);
+  }
+  
+  .customDataGrid .MuiSvgIcon-root-MuiSelect-icon {
+    color: var(--pagination-icon-color);
+  }
+  /* Footer Section End */
+  
+  /* Menu Section Start */
+  .MuiButtonBase-root-MuiIconButton-root {
+    color: var(--header-font-color) !important;
+  }
+  
+  .css-1lzspe0-MuiSvgIcon-root {
+    color: #ffffff !important;
+  }
+  
+  .css-18qwuto-MuiPaper-root-MuiDataGrid-paper {
+    min-width: 230px !important;
+    top: -25px !important;
+    position: inherit !important;
+  }
+  
+  .MuiList-root {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    min-width: auto !important;
+  }
+  
+  .css-x3v5ab-MuiButtonBase-root-MuiMenuItem-root-MuiTablePagination-menuItem,
+  .css-1h4bzp1-MuiButtonBase-root-MuiMenuItem-root {
+    font-size: 0.8rem !important;
+  }
+  
+  .css-5bvx1p-MuiSelect-select-MuiInputBase-input-MuiInput-input,
+  .css-1o3an4k-MuiInputBase-input-MuiInput-input {
+    font-size: 0.8rem !important;
+    padding: 2.5px !important;
+  }
+  
+  .MuiTypography-root {
+    margin: 0;
+    font-family: var(--font-family);
+    font-weight: 400;
+    font-size: var(--font-size-small) !important;
+    line-height: 1.5;
+    letter-spacing: 0.00938em;
+  }
+  
+  .MuiDataGrid-columnsManagementHeader {
+    padding: 5px !important;
+  }
+  /* Menu Section End */
+  
+  /* ActionComponent */
+  .export-field {
+    display: flex;
+    align-items: center;
+    float: left;
+  }
+  
+  .export-field .MuiChip-root {
+    background-color: transparent;
+    box-shadow: none;
+    border: none;
+  }
+  
+  .export-field .MuiAvatar-root {
+    background-color: transparent;
+  }
+  
+  .export-field .MuiAvatar-root .fa-file-excel {
+    color: var(--chip-excel-color);
+    font-size: var(--font-size-chip-icon);
+  }
+  
+  .export-field .MuiAvatar-root .fa-file-csv {
+    color: var(--chip-csv-color);
+    font-size: var(--font-size-chip-icon);
+  }
+  
+  .export-field .MuiAvatar-root .fa-file-archive {
+    color: var(--chip-zip-color);
+    font-size: var(--font-size-chip-icon);
+  }
+  
