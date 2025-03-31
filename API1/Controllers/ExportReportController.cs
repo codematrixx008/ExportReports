@@ -126,6 +126,7 @@ public ReportsController(ILogger<ReportsController> logger, IReports reportsRepo
         {
             // Mark report as generating
             await _reportsRepository.UpdateReportGeneratingStatus(ReportId, true);
+            
 
             if (string.IsNullOrWhiteSpace(ReportName) || string.IsNullOrWhiteSpace(SpName) || string.IsNullOrWhiteSpace(ExportType))
             {
@@ -163,6 +164,7 @@ public ReportsController(ILogger<ReportsController> logger, IReports reportsRepo
 
             // Mark report as finished generating
             await _reportsRepository.UpdateReportGeneratingStatus(ReportId, false);
+            await _reportsRepository.UpdateReportGeneratedStatus(ReportId, true);
            
             await _reportsRepository.UpdateLastGeneratedOnAndBy(ReportId, DateTime.Now, 123);
 

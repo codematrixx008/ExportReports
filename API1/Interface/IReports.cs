@@ -8,6 +8,7 @@ namespace API1.Interface
     {
         Task<IEnumerable<ReportsModel>> GetAllReportsAsync();
         Task<bool> UpdateReportGeneratingStatus(int reportId, bool isGenerating);
+        Task<bool> UpdateReportGeneratedStatus(int reportId, bool isGenerated);
         Task<bool> UpdateLastGeneratedOnAndBy(int reportId, DateTime lastGeneratedOn, int lastGeneratedBy);
         Task<MemoryStream> GetCsvStreamForReport(ExportReportsModel model);
         Task<MemoryStream> GetWorkbookStreamForReport(ExportReportsModel reportModal);

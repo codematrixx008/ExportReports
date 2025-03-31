@@ -45,6 +45,21 @@ namespace API1.Repository
             {
                 throw new Exception("Error updating report generating status", ex);
             }
+        } 
+        
+        public async Task<bool> UpdateReportGeneratedStatus(int reportId, bool isGenerated)
+        {
+            try
+            {
+                using IDbConnection db = _dapperDbConnection.CreateConnection();
+                string query = "UPDATE Reports SET IsGenerated = @IsGenerated WHERE ReportId = @ReportId";
+                int rowsAffected = await db.ExecuteAsync(query, new { IsGenerated = isGenerated, ReportId = reportId });
+                return rowsAffected > 0;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error updating report generating status", ex);
+            }
         }
 
         public async Task<bool> UpdateLastGeneratedOnAndBy(int reportId, DateTime lastGeneratedOn, int lastGeneratedBy)

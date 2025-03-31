@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState ,useEffect} from "react";
 import { Chip } from "@mui/material";
 import axios from "axios";
 import { BarLoader } from "react-spinners";
@@ -10,9 +10,6 @@ import { faFileCsv, faFileExcel, faFileArchive, faRefresh } from "@fortawesome/f
 const ActionComponent = ({ cellData }) => {
   const [loader, setLoader] = useState(false);
   const apiBaseUrl = "http://localhost:5280";
-
-
-
 
 
   const handleExport = (cellData, type) => {
@@ -49,6 +46,8 @@ const ActionComponent = ({ cellData }) => {
         console.error("Error exporting file:", error);
       });
   };
+console.log("CellData:",cellData)
+
 
   const handleRefresh = (cellData, type) => {
     setLoader(true);
@@ -103,6 +102,7 @@ const ActionComponent = ({ cellData }) => {
     <>
       <div className="export-field">
         {/* Excel */}
+
         <Chip
           sx={{ marginRight: "10px", backgroundColor: "transparent", boxShadow: "none", border: "none" }}
           avatar={
@@ -111,7 +111,7 @@ const ActionComponent = ({ cellData }) => {
             </Avatar>
           }
           onClick={() => handleDownload(cellData, "xlsx")}
-          disabled={loader}
+          disabled={loader || cellData.isGenerating}
         />
         {/* CSV */}
         <Chip
@@ -122,7 +122,7 @@ const ActionComponent = ({ cellData }) => {
             </Avatar>
           }
           onClick={() => handleDownload(cellData, "csv")}
-          disabled={loader}
+          disabled={loader|| cellData.isGenerating}
         />
         {/* Zip */}
         <Chip
@@ -133,7 +133,7 @@ const ActionComponent = ({ cellData }) => {
             </Avatar>
           }
           onClick={() => handleDownload(cellData, "zip")}
-          disabled={loader}
+          disabled={loader|| cellData.isGenerating}
         />
         {/* Refresh */}
         {cellData.hasStaticFile && (
@@ -148,7 +148,7 @@ const ActionComponent = ({ cellData }) => {
           />
         )}
 
-        <BarLoader loading={loader} width={50} />
+        <BarLoader loading={loader|| cellData.isGenerating} width={50} />
 
       </div>
     </>
