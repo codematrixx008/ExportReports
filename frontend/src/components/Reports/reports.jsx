@@ -24,7 +24,6 @@ export default function Reports() {
   }, []);
 
 
-
   const [isAnyGenerating, setIsAnyGenerating] = useState(false);
 
   useEffect(() => {
@@ -97,7 +96,8 @@ export default function Reports() {
 
   const paginationModel = { page: 0, pageSize: 10 };
 
-  return (<div style={{padding:10}}>
+  return (
+  <div style={{padding:10}}>
   <h3>Reports</h3>
       <hr></hr>
     <div className="report-container">

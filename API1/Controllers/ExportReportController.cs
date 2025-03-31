@@ -11,6 +11,9 @@ using System.IO.Compression;
 using System.IO.Pipes;
 using Microsoft.Extensions.Logging;
 using Dapper;
+using System.Data.SqlClient;
+using System.Data.Common;
+using Microsoft.Extensions.Configuration;
 
 
 [ApiController]
@@ -22,12 +25,16 @@ public class ReportsController : ControllerBase
     private readonly IReports _reportsRepository;
     private readonly ILogger<ReportsController> _logger;
     private readonly IDapperDbConnection _dapperDbConnection;
+    private readonly string _connectionString;
 
-public ReportsController(ILogger<ReportsController> logger, IReports reportsRepository,IDapperDbConnection dapperDbConnection)
+    private readonly string _filePath = @"C:\Users\JOHN\Downloads\1 Lakh.xlsx"; // Change this path accordingly
+
+    public ReportsController(ILogger<ReportsController> logger, IReports reportsRepository,IDapperDbConnection dapperDbConnection, IConfiguration configuration)
     {
         _logger = logger;
         _reportsRepository = reportsRepository;
         _dapperDbConnection = dapperDbConnection;
+        _connectionString = configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
     }
 
     [HttpGet]
@@ -152,7 +159,7 @@ public ReportsController(ILogger<ReportsController> logger, IReports reportsRepo
                 var fileName = $"{ReportName}.{fileType}";
                 var filePath = Path.Combine(directoryPath, fileName);
 
-                byte[] fileContent = GenerateFileContent(ReportName, SpName, fileType);
+                byte[] fileContent = await GenerateFileContent(ReportName, SpName, fileType);
                 if (fileContent == null || fileContent.Length == 0)
                 {
                     return StatusCode(500, new { message = $"File generation failed for {fileType}." });
@@ -176,7 +183,6 @@ public ReportsController(ILogger<ReportsController> logger, IReports reportsRepo
             return StatusCode(500, new { message = "Error saving files.", error = ex.Message });
         }
     }
-
 
     //[HttpGet("SaveToServerForStaticReport")]
     //public async Task<IActionResult> SaveToServerForStaticReport(int ReportId, string ReportName, string SpName, string ExportType)
@@ -234,8 +240,6 @@ public ReportsController(ILogger<ReportsController> logger, IReports reportsRepo
     //    }
     //}
 
-
-
     [HttpGet("DownloadReportFile")]
     public IActionResult DownloadReportFile(string fileName)
     {
@@ -276,89 +280,94 @@ public ReportsController(ILogger<ReportsController> logger, IReports reportsRepo
             _ => "application/octet-stream",
         };
     }
-    private byte[] GenerateFileContent(string reportName, string spName, string exportType)
+    private async Task<byte[]> GenerateFileContent(string reportName, string spName, string exportType)
     {
         try
         {
-            // Fetch data from database using Dapper
-            using (var connection = _dapperDbConnection.CreateConnection())
+            using SqlConnection connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            using SqlCommand command = new SqlCommand($"EXEC {spName}", connection);
+            using SqlDataReader reader = await command.ExecuteReaderAsync();
+
+
+            if (exportType.Equals("xlsx", StringComparison.OrdinalIgnoreCase))
             {
-                var data = connection.Query(spName, commandType: CommandType.StoredProcedure).ToList();
-
-                if (data == null || !data.Any())
-                {
-                    throw new Exception("No data found for the given report.");
-                }
-
-                if (exportType.Equals("xlsx", StringComparison.OrdinalIgnoreCase))
-                {
-                    return GenerateExcel(data, reportName);
-                }
-                else if (exportType.Equals("csv", StringComparison.OrdinalIgnoreCase))
-                {
-                    return GenerateCsv(data);
-                }
-                else if (exportType.Equals("zip", StringComparison.OrdinalIgnoreCase))
-                {
-                    byte[] excelData = GenerateExcel(data, reportName);
-                    byte[] csvData = GenerateCsv(data);
-                    return GenerateZip(excelData, csvData, reportName);
-                }
-                else
-                {
-                    throw new Exception("Invalid export type.");
-                }
+                return GenerateExcel(reader, reportName);
             }
+            else if (exportType.Equals("csv", StringComparison.OrdinalIgnoreCase))
+            {
+                return await GenerateCsv(reader);
+            }
+            else if (exportType.Equals("zip", StringComparison.OrdinalIgnoreCase))
+            {
+                byte[] excelData = GenerateExcel(reader, reportName);
+                byte[] csvData = await GenerateCsv(reader);
+                return GenerateZip(excelData, csvData, reportName);
+            }
+            else
+            {
+                throw new Exception("Invalid export type.");
+            }
+
         }
         catch (Exception ex)
         {
             throw new Exception($"Error generating file content: {ex.Message}");
         }
     }
-    private byte[] GenerateExcel(List<dynamic> data, string reportName)
+
+    private byte[] GenerateExcel(IDataReader reader, string reportName)
     {
         using (var package = new ExcelPackage())
         {
             var worksheet = package.Workbook.Worksheets.Add(reportName);
 
-            // Add Headers
-            var headers = ((IDictionary<string, object>)data.First()).Keys.ToList();
-            for (int i = 0; i < headers.Count; i++)
+            // Get column headers from the IDataReader
+            var headers = new List<string>();
+            for (int i = 0; i < reader.FieldCount; i++)
             {
+                headers.Add(reader.GetName(i));
                 worksheet.Cells[1, i + 1].Value = headers[i];
                 worksheet.Cells[1, i + 1].Style.Font.Bold = true;
             }
 
-            // Add Data
-            for (int row = 0; row < data.Count; row++)
+            // Add data from IDataReader
+            int row = 2;
+            while (reader.Read()) // Read each row from IDataReader
             {
-                var rowData = (IDictionary<string, object>)data[row];
                 for (int col = 0; col < headers.Count; col++)
                 {
-                    worksheet.Cells[row + 2, col + 1].Value = rowData[headers[col]];
+                    worksheet.Cells[row, col + 1].Value = reader[col]; // Fetch column value
                 }
+                row++;
             }
 
             return package.GetAsByteArray();
         }
     }
-    private byte[] GenerateCsv(List<dynamic> data)
+
+    public async Task<byte[]> GenerateCsv(DbDataReader reader)
     {
-        var csvBuilder = new StringBuilder();
-        var headers = ((IDictionary<string, object>)data.First()).Keys.ToList();
+        using var memoryStream = new MemoryStream();
+        using var writer = new StreamWriter(memoryStream, Encoding.UTF8);
+        var columns = Enumerable.Range(0, reader.FieldCount)
+                                .Select(reader.GetName)
+                                .ToArray();
+        await writer.WriteLineAsync(string.Join(",", columns));
 
-        // Add Headers
-        csvBuilder.AppendLine(string.Join(",", headers));
-
-        // Add Data
-        foreach (var row in data)
+        while (await reader.ReadAsync())
         {
-            var rowData = (IDictionary<string, object>)row;
-            csvBuilder.AppendLine(string.Join(",", headers.Select(h => rowData[h]?.ToString() ?? "")));
+            var values = columns.Select(column =>
+                $"\"{reader[column]?.ToString().Replace("\"", "\"\"")}\""); // Escape double quotes
+            await writer.WriteLineAsync(string.Join(",", values));
         }
 
-        return Encoding.UTF8.GetBytes(csvBuilder.ToString());
+        await writer.FlushAsync();
+        return memoryStream.ToArray(); // Convert stream to byte array
     }
+
+
     private byte[] GenerateZip(byte[] excelData, byte[] csvData, string reportName)
     {
         using (var memoryStream = new MemoryStream())
@@ -379,5 +388,19 @@ public ReportsController(ILogger<ReportsController> logger, IReports reportsRepo
             }
             return memoryStream.ToArray();
         }
+    }
+
+
+
+    [HttpGet("DownloadFile")]
+    public IActionResult DownloadFile()
+    {
+        if (!System.IO.File.Exists(_filePath))
+        {
+            return BadRequest(new { message = "File path is not set or file does not exist." });
+        }
+
+        byte[] fileBytes = System.IO.File.ReadAllBytes(_filePath);
+        return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "DownloadedFile.xlsx");
     }
 }

@@ -1,10 +1,10 @@
 :root {
     /* Colors */
     --background-color: #ffffff;
-    --header-background-color: #1e5adc;
-    --header-font-color: #ffffff;
+    --header-background-color: #c6ffc8;
+    --header-font-color: #171717;
     --row-background-color: #fbfbfb;
-    --footer-background-color: #1e5adc;
+    --footer-background-color: #c6ffc8;
     --pagination-icon-color: #ffffff;
     --chip-excel-color: #047413;
     --chip-csv-color: #047413;

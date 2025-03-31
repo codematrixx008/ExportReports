@@ -45,6 +45,23 @@ const Profile = () => {
         }
     };
 
+    const handleDownload = async () => {
+        try {
+            const response = await axios.get("http://localhost:5280/Reports/DownloadFile", {
+                responseType: "blob", // Ensures proper file download
+            });
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement("a");
+            link.href = url;
+            link.setAttribute("download", "DownloadedFile.xlsx");
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            alert("File path is not set or file does not exist.");
+        }
+    };
 
     return (
         <div className="container mt-5">
@@ -63,8 +80,10 @@ const Profile = () => {
             </div>
 
             <div className="text-center mt-3">
-                <Reports/>
+                <Reports />
             </div>
+
+            <button onClick={handleDownload}>Download Excel</button>
         </div>
 
     );
