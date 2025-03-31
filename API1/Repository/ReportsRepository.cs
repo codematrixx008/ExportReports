@@ -5,6 +5,7 @@ using Dapper;
 using API1.Interface;
 using API1.Model;
 using OfficeOpenXml;
+using Util;
 
 namespace API1.Repository
 {
@@ -12,11 +13,13 @@ namespace API1.Repository
     {
         private readonly string _connectionString;
         private readonly IDapperDbConnection _dapperDbConnection;
+        private readonly string _reportPath;
 
         public ReportsRepository(IDapperDbConnection dapperDbConnection, IConfiguration configuration)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
             _dapperDbConnection = dapperDbConnection;
+            _reportPath = configuration["ReportPath:Path"] ?? string.Empty;
         }
 
         public async Task<IEnumerable<ReportsModel>> GetAllReportsAsync()
@@ -143,5 +146,28 @@ namespace API1.Repository
 
             return dataTable;
         }
+
+        public async Task<bool> GenerateReports(int ReportId, string ReportName, string SpName)
+        {
+            try
+            {
+                using SqlConnection connection = new SqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                using SqlCommand command = new SqlCommand($"EXEC {SpName}", connection);
+                using SqlDataReader reader = await command.ExecuteReaderAsync();
+
+                var data = await Util.Util.ReadDataAsync(reader);
+
+                await Util.Util.GenerateAndSaveReportAsync(_reportPath, ReportName, data);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error updating report generating status", ex);
+            }
+        }
+
     }
 }

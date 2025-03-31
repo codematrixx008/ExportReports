@@ -1,3 +1,6 @@
 /API1/.vs
 /API1/bin
 /API1/obj
+*.dll
+/Util/bin
+/Util/obj

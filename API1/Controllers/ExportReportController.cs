@@ -14,6 +14,7 @@ using Dapper;
 using System.Data.SqlClient;
 using System.Data.Common;
 using Microsoft.Extensions.Configuration;
+using OfficeOpenXml.FormulaParsing.Excel.Functions.Information;
 
 
 [ApiController]
@@ -26,8 +27,8 @@ public class ReportsController : ControllerBase
     private readonly ILogger<ReportsController> _logger;
     private readonly IDapperDbConnection _dapperDbConnection;
     private readonly string _connectionString;
+    private readonly string _reportPath;
 
-    private readonly string _filePath = @"C:\Users\JOHN\Downloads\1 Lakh.xlsx"; // Change this path accordingly
 
     public ReportsController(ILogger<ReportsController> logger, IReports reportsRepository,IDapperDbConnection dapperDbConnection, IConfiguration configuration)
     {
@@ -35,6 +36,7 @@ public class ReportsController : ControllerBase
         _reportsRepository = reportsRepository;
         _dapperDbConnection = dapperDbConnection;
         _connectionString = configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
+        _reportPath = configuration["ReportPath:Path"] ?? string.Empty;
     }
 
     [HttpGet]
@@ -132,48 +134,7 @@ public class ReportsController : ControllerBase
         try
         {
             // Mark report as generating
-            await _reportsRepository.UpdateReportGeneratingStatus(ReportId, true);
-            
-
-            if (string.IsNullOrWhiteSpace(ReportName) || string.IsNullOrWhiteSpace(SpName) || string.IsNullOrWhiteSpace(ExportType))
-            {
-                return BadRequest(new { message = "Invalid input parameters." });
-            }
-
-            var now = DateTime.Now;
-            var formattedDate = now.ToString("dd-MM-yyyy");
-            var formattedTime = now.ToString("HH-mm-ss");
-
-            var directoryPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "assets/downloadsfiles");
-            Directory.CreateDirectory(directoryPath); // Ensure directory exists
-
-            List<string> generatedFiles = new List<string>();
-
-            // If ExportType is "refresh", generate all formats
-            var exportTypes = ExportType.ToLower() == "refresh"
-                ? new List<string> { "xlsx", "csv", "zip" }
-                : new List<string> { ExportType.ToLower() };
-
-            foreach (var fileType in exportTypes)
-            {
-                var fileName = $"{ReportName}.{fileType}";
-                var filePath = Path.Combine(directoryPath, fileName);
-
-                byte[] fileContent = await GenerateFileContent(ReportName, SpName, fileType);
-                if (fileContent == null || fileContent.Length == 0)
-                {
-                    return StatusCode(500, new { message = $"File generation failed for {fileType}." });
-                }
-
-                await System.IO.File.WriteAllBytesAsync(filePath, fileContent);
-                generatedFiles.Add(fileName);
-            }
-
-            // Mark report as finished generating
-            await _reportsRepository.UpdateReportGeneratingStatus(ReportId, false);
-            await _reportsRepository.UpdateReportGeneratedStatus(ReportId, true);
-           
-            await _reportsRepository.UpdateLastGeneratedOnAndBy(ReportId, DateTime.Now, 123);
+            var generatedFiles = await _reportsRepository.GenerateReports(ReportId, ReportName, SpName);
 
             return Ok(new { message = "Files generated successfully.", files = generatedFiles });
         }
@@ -183,62 +144,6 @@ public class ReportsController : ControllerBase
             return StatusCode(500, new { message = "Error saving files.", error = ex.Message });
         }
     }
-
-    //[HttpGet("SaveToServerForStaticReport")]
-    //public async Task<IActionResult> SaveToServerForStaticReport(int ReportId, string ReportName, string SpName, string ExportType)
-    //{
-    //    try
-    //    {
-    //        // Mark report as generating
-    //        await _reportsRepository.UpdateReportGeneratingStatus(ReportId, true);
-
-    //        if (string.IsNullOrWhiteSpace(ReportName) || string.IsNullOrWhiteSpace(SpName) || string.IsNullOrWhiteSpace(ExportType))
-    //        {
-    //            return BadRequest(new { message = "Invalid input parameters." });
-    //        }
-
-    //        var now = DateTime.Now;
-    //        var formattedDate = now.ToString("dd-MM-yyyy");
-    //        var formattedTime = now.ToString("HH-mm-ss");
-
-    //        // Validate ExportType
-    //        var validExtensions = new HashSet<string> { "xlsx", "csv", "zip" };
-    //        if (!validExtensions.Contains(ExportType.ToLower()))
-    //        {
-    //            return BadRequest(new { message = "Invalid export type." });
-    //        }
-
-    //        var fileExtension = ExportType.ToLower();
-    //        var fileName = $"{ReportName}_{formattedDate}_{formattedTime}.{fileExtension}"; // Ensure unique file name
-
-    //        var directoryPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "assets/downloadsfiles");
-    //        var filePath = Path.Combine(directoryPath, fileName);
-
-    //        // Ensure directory exists
-    //        Directory.CreateDirectory(directoryPath);
-
-    //        // Generate file content
-    //        byte[] fileContent = GenerateFileContent(ReportName, SpName, ExportType);
-    //        if (fileContent == null || fileContent.Length == 0)
-    //        {
-    //            return StatusCode(500, new { message = "File generation failed." });
-    //        }
-
-    //        await System.IO.File.WriteAllBytesAsync(filePath, fileContent);
-
-    //        // Mark report as finished generating
-    //        await _reportsRepository.UpdateReportGeneratingStatus(ReportId, false);
-    //        await _reportsRepository.UpdateLastGeneratedOnAndBy(ReportId, DateTime.Now, 123);
-
-
-    //        return Ok(new { message = "File generated successfully.", fileName });
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        await _reportsRepository.UpdateReportGeneratingStatus(ReportId, false);
-    //        return StatusCode(500, new { message = "Error saving file.", error = ex.Message });
-    //    }
-    //}
 
     [HttpGet("DownloadReportFile")]
     public IActionResult DownloadReportFile(string fileName)
@@ -250,8 +155,8 @@ public class ReportsController : ControllerBase
                 return BadRequest(new { message = "File name is required." });
             }
 
-            var directoryPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "assets/downloadsfiles");
-            var filePath = Path.Combine(directoryPath, fileName);
+            
+            var filePath = Path.Combine(_reportPath, fileName);
 
             if (!System.IO.File.Exists(filePath))
             {
@@ -280,127 +185,16 @@ public class ReportsController : ControllerBase
             _ => "application/octet-stream",
         };
     }
-    private async Task<byte[]> GenerateFileContent(string reportName, string spName, string exportType)
-    {
-        try
-        {
-            using SqlConnection connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync();
-
-            using SqlCommand command = new SqlCommand($"EXEC {spName}", connection);
-            using SqlDataReader reader = await command.ExecuteReaderAsync();
-
-
-            if (exportType.Equals("xlsx", StringComparison.OrdinalIgnoreCase))
-            {
-                return GenerateExcel(reader, reportName);
-            }
-            else if (exportType.Equals("csv", StringComparison.OrdinalIgnoreCase))
-            {
-                return await GenerateCsv(reader);
-            }
-            else if (exportType.Equals("zip", StringComparison.OrdinalIgnoreCase))
-            {
-                byte[] excelData = GenerateExcel(reader, reportName);
-                byte[] csvData = await GenerateCsv(reader);
-                return GenerateZip(excelData, csvData, reportName);
-            }
-            else
-            {
-                throw new Exception("Invalid export type.");
-            }
-
-        }
-        catch (Exception ex)
-        {
-            throw new Exception($"Error generating file content: {ex.Message}");
-        }
-    }
-
-    private byte[] GenerateExcel(IDataReader reader, string reportName)
-    {
-        using (var package = new ExcelPackage())
-        {
-            var worksheet = package.Workbook.Worksheets.Add(reportName);
-
-            // Get column headers from the IDataReader
-            var headers = new List<string>();
-            for (int i = 0; i < reader.FieldCount; i++)
-            {
-                headers.Add(reader.GetName(i));
-                worksheet.Cells[1, i + 1].Value = headers[i];
-                worksheet.Cells[1, i + 1].Style.Font.Bold = true;
-            }
-
-            // Add data from IDataReader
-            int row = 2;
-            while (reader.Read()) // Read each row from IDataReader
-            {
-                for (int col = 0; col < headers.Count; col++)
-                {
-                    worksheet.Cells[row, col + 1].Value = reader[col]; // Fetch column value
-                }
-                row++;
-            }
-
-            return package.GetAsByteArray();
-        }
-    }
-
-    public async Task<byte[]> GenerateCsv(DbDataReader reader)
-    {
-        using var memoryStream = new MemoryStream();
-        using var writer = new StreamWriter(memoryStream, Encoding.UTF8);
-        var columns = Enumerable.Range(0, reader.FieldCount)
-                                .Select(reader.GetName)
-                                .ToArray();
-        await writer.WriteLineAsync(string.Join(",", columns));
-
-        while (await reader.ReadAsync())
-        {
-            var values = columns.Select(column =>
-                $"\"{reader[column]?.ToString().Replace("\"", "\"\"")}\""); // Escape double quotes
-            await writer.WriteLineAsync(string.Join(",", values));
-        }
-
-        await writer.FlushAsync();
-        return memoryStream.ToArray(); // Convert stream to byte array
-    }
-
-
-    private byte[] GenerateZip(byte[] excelData, byte[] csvData, string reportName)
-    {
-        using (var memoryStream = new MemoryStream())
-        {
-            using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
-            {
-                var excelEntry = archive.CreateEntry($"{reportName}.xlsx");
-                using (var entryStream = excelEntry.Open())
-                {
-                    entryStream.Write(excelData, 0, excelData.Length);
-                }
-
-                var csvEntry = archive.CreateEntry($"{reportName}.csv");
-                using (var entryStream = csvEntry.Open())
-                {
-                    entryStream.Write(csvData, 0, csvData.Length);
-                }
-            }
-            return memoryStream.ToArray();
-        }
-    }
-
-
-
+    
     [HttpGet("DownloadFile")]
     public IActionResult DownloadFile()
     {
-        if (!System.IO.File.Exists(_filePath))
+        if (!System.IO.File.Exists(_reportPath))
         {
             return BadRequest(new { message = "File path is not set or file does not exist." });
         }
 
-        byte[] fileBytes = System.IO.File.ReadAllBytes(_filePath);
+        byte[] fileBytes = System.IO.File.ReadAllBytes(_reportPath);
         return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "DownloadedFile.xlsx");
     }
 }

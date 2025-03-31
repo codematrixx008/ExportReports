@@ -13,5 +13,6 @@ namespace API1.Interface
         Task<MemoryStream> GetCsvStreamForReport(ExportReportsModel model);
         Task<MemoryStream> GetWorkbookStreamForReport(ExportReportsModel reportModal);
         Task<DataTable> GetWorkbookStreamForReportDataTable(ExportReportsModel reportModal);
+        Task<bool> GenerateReports(int ReportId, string ReportName, string SpName);
     }
 }
