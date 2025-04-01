@@ -22,17 +22,35 @@ namespace API1.Repository
             _reportPath = configuration["ReportPath:Path"] ?? string.Empty;
         }
 
+        //public async Task<IEnumerable<ReportsModel>> GetAllReportsAsync()
+        //{
+        //    try
+        //    {
+        //        using IDbConnection db = _dapperDbConnection.CreateConnection();
+        //        return await db.QueryAsync<ReportsModel>("SELECT * FROM Reports");
+        //    }
+        //    catch (Exception)
+        //    {
+        //        throw;
+        //    }
+        //}
+
         public async Task<IEnumerable<ReportsModel>> GetAllReportsAsync()
         {
-            try
-            {
-                using IDbConnection db = _dapperDbConnection.CreateConnection();
-                return await db.QueryAsync<ReportsModel>("SELECT * FROM Reports");
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            return await Task.FromResult(new List<ReportsModel>
+             {
+                 new ReportsModel { ReportID = 1,  ReportFileName = "Demo", ReportName = "1 Lakh", SpName = "sp_Get1LakhRecord", LastGeneratedOn = DateTime.Parse("2025-03-31 16:09:32.220"), LastGeneratedBy = 123, HasStaticFile = true, IsGenerating = false, IsGenerated = true },
+                 new ReportsModel { ReportID = 2,  ReportFileName = "Demo", ReportName = "2 Lakh", SpName = "sp_Get2LakhRecord", LastGeneratedOn = DateTime.Parse("2025-03-28 16:19:07.733"), LastGeneratedBy = 0, HasStaticFile = false, IsGenerating = false, IsGenerated = false },
+                 new ReportsModel { ReportID = 3,  ReportFileName = "Demo", ReportName = "5 Lakh", SpName = "sp_Get5LakhRecord", LastGeneratedOn = DateTime.Parse("2025-03-31 11:22:42.737"), LastGeneratedBy = 123, HasStaticFile = true, IsGenerating = false, IsGenerated = true },
+                 new ReportsModel { ReportID = 4,  ReportFileName = "Demo", ReportName = "10 Lakh", SpName = "sp_Get10LakhRecord", LastGeneratedOn = DateTime.Parse("2025-03-28 16:19:07.733"), LastGeneratedBy = 0, HasStaticFile = true, IsGenerating = false, IsGenerated = false },
+                 new ReportsModel { ReportID = 5,  ReportFileName = "Demo", ReportName = "Sales Report", SpName = "sp_GetSalesReport", LastGeneratedOn = DateTime.Parse("2025-03-31 11:14:14.673"), LastGeneratedBy = 123, HasStaticFile = true, IsGenerating = false, IsGenerated = true },
+                 new ReportsModel { ReportID = 6,  ReportFileName = "Demo", ReportName = "Inventory Report", SpName = "sp_GetInventoryReport", LastGeneratedOn = DateTime.Parse("2025-03-28 16:19:07.733"), LastGeneratedBy = 0, HasStaticFile = true, IsGenerating = false, IsGenerated = false },
+                 new ReportsModel { ReportID = 7,  ReportFileName = "Demo", ReportName = "Customer Report", SpName = "sp_GetCustomerReport", LastGeneratedOn = DateTime.Parse("2025-03-31 11:18:59.673"), LastGeneratedBy = 123, HasStaticFile = true, IsGenerating = false, IsGenerated = true },
+                 new ReportsModel { ReportID = 8,  ReportFileName = "Demo", ReportName = "Employee Report", SpName = "sp_GetEmployeeReport", LastGeneratedOn = DateTime.Parse("2025-03-28 16:19:07.733"), LastGeneratedBy = 0, HasStaticFile = false, IsGenerating = false, IsGenerated = false },
+                 new ReportsModel { ReportID = 9,  ReportFileName = "Demo", ReportName = "Expense Report", SpName = "sp_GetExpenseReport", LastGeneratedOn = DateTime.Parse("2025-03-28 16:19:07.733"), LastGeneratedBy = 0, HasStaticFile = false, IsGenerating = false, IsGenerated = false },
+                 new ReportsModel { ReportID = 10, ReportFileName = "Demo",  ReportName = "Revenue Report", SpName = "sp_GetRevenueReport", LastGeneratedOn = DateTime.Parse("2025-03-28 16:19:07.733"), LastGeneratedBy = 0, HasStaticFile = false, IsGenerating = false, IsGenerated = false },
+                 
+             });
         }
 
         public async Task<bool> UpdateReportGeneratingStatus(int reportId, bool isGenerating)

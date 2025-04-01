@@ -193,7 +193,6 @@ public class ReportsController : ControllerBase
         {
             return BadRequest(new { message = "File path is not set or file does not exist." });
         }
-
         byte[] fileBytes = System.IO.File.ReadAllBytes(_reportPath);
         return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "DownloadedFile.xlsx");
     }

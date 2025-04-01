@@ -7,6 +7,8 @@ import Cookies from "js-cookie";
 import Reports from "./Reports/reports";
 
 const API_URL = "http://localhost:5280/api/Auth";
+const LOGO_URL = "/assets/logo.jpg";  // Logo file path
+const userName = "John Cena"; // Replace with dynamic username
 
 const Profile = () => {
     const navigate = useNavigate();
@@ -24,31 +26,10 @@ const Profile = () => {
         }
     };
 
-    // const handletest = async () => {
-    //     try {
-    //         await axios.post(`${API_URL}/login2`, {}, { withCredentials: true });
-    //         console.log("Login successful");
-    //     } catch (error) {
-    //         console.error("Login failed", error);
-    //     }
-    // };
-
-    const handletest = async () => {
-        try {
-            const response = await axios.post(`${API_URL}/login3`, {}, { withCredentials: true });
-
-            if (response.data.redirectUrl) {
-                window.location.href = response.data.redirectUrl;  // Navigate to profile page
-            }
-        } catch (error) {
-            console.error("Login failed", error);
-        }
-    };
-
     const handleDownload = async () => {
         try {
             const response = await axios.get("http://localhost:5280/Reports/DownloadFile", {
-                responseType: "blob", // Ensures proper file download
+                responseType: "blob",
             });
 
             const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -64,28 +45,36 @@ const Profile = () => {
     };
 
     return (
-        <div className="container mt-5">
-            <div className="row d-flex flex-wrap align-items-center">
-                <div className="col-12 col-md-6 text-center text-md-start">
-                    <div className="p-4">
-                        <h2>Profile</h2>
-                    </div>
-                </div>
-
-                <div className="col-12 col-md-6 d-flex justify-content-center justify-content-md-end">
-                    <button className="btn btn-danger" onClick={handleLogout}>
-                        Logout
-                    </button>
+        <div className="container mt-3">
+            {/* Navbar */}
+            <div className="d-flex justify-content-between align-items-center p-3 border-bottom">
+                <img src={LOGO_URL} alt="Logo" className="logo" style={{ height: "100px" }} />
+                <div className="d-flex align-items-center">
+                    <span className="me-3 fw-bold">{userName}</span>
+                  
                 </div>
             </div>
 
+            {/* Profile Section */}
+            {/* <div className="mt-4 text-center">
+                <h2>Profile</h2>
+                <button className="btn btn-danger" onClick={handleLogout}>
+                        Logout
+                    </button>
+            </div> */}
+
+            {/* Reports Section */}
             <div className="text-center mt-3">
                 <Reports />
             </div>
 
-            <button onClick={handleDownload}>Download Excel</button>
+            {/* Download Button */}
+            {/* <div className="text-center mt-3">
+                <button className="btn btn-primary" onClick={handleDownload}>
+                    Download Excel
+                </button>
+            </div> */}
         </div>
-
     );
 };
 

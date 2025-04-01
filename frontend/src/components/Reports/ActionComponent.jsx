@@ -71,13 +71,13 @@ console.log("CellData:",cellData)
 
   const handleDownload = async (cellData, type) => {
     try {
-      console.log("cellData:", cellData.reportName, type, cellData);
-      if (!cellData?.reportName) {
+      console.log("cellData:", cellData.reportFileName, type, cellData);
+      if (!cellData?.reportFileName) {
         console.error("File name is required.");
         return;
       }
 
-      const fileName = `${cellData.reportName}.${type}`;
+      const fileName = `${cellData.reportFileName}.${type}`;
       const response = await fetch(`${apiBaseUrl}/Reports/DownloadReportFile?fileName=${encodeURIComponent(fileName)}`);
 
       if (!response.ok) {

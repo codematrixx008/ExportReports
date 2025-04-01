@@ -52,6 +52,7 @@ export default function Reports() {
 
   const columns = [
     { field: 'reportName', headerName: 'Report Name', flex: 0.7},
+    { field: 'reportFileName', headerName: 'File Name', flex: 0.7},
     { field: 'lastGeneratedBy', headerName: 'Last GeneratedBy', flex: 0.7},
     { 
       field: 'lastGeneratedOn', 

@@ -4,6 +4,7 @@
     {
         public int ReportID { get; set; }
         public string ReportName { get; set; }
+        public string ReportFileName { get; set; }
         public string SpName { get; set; }
         public DateTime LastGeneratedOn { get; set; }
         public int LastGeneratedBy { get; set; }
