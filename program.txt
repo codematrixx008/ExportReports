@@ -14,3 +14,72 @@ Console.WriteLine($"Connection String: {connectionString}");
 // Read EntityId
 var entityId = config[$"{basePath}:Saml2:EntityId"];
 Console.WriteLine($"EntityId: {entityId}");
+
+//More Code
+//================================================================================
+
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+
+// Define model classes
+public class Saml2Settings
+{
+    public string EntityId { get; set; }
+    public string IdpMetadata { get; set; }
+    public bool SignAuthnRequest { get; set; }
+    public string CertificateBase64 { get; set; }
+}
+
+public class ConnectionStrings
+{
+    public string DefaultConnection { get; set; }
+}
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Get configuration reference
+var config = builder.Configuration;
+
+// Read the environment mode from appsettings.json
+var envMode = config["EnvironmentSettings:EnvMode"]; // "DEV" or "UAT"
+
+// Build dynamic path based on EnvMode
+var basePath = $"EnvironmentSettings:EnvMode{envMode}";
+
+// ✅ Read values from configuration
+var connectionString = config[$"{basePath}:ConnectionStrings:DefaultConnection"];
+var entityId = config[$"{basePath}:Saml2:EntityId"];
+
+// ✅ Print values (for debugging or verification)
+Console.WriteLine("Environment Mode: " + envMode);
+Console.WriteLine("Connection String: " + connectionString);
+Console.WriteLine("Entity ID: " + entityId);
+
+// Optionally bind to classes (you can use them via DI later if needed)
+var saml2Settings = config.GetSection($"{basePath}:Saml2").Get<Saml2Settings>();
+var dbConnection = config.GetSection($"{basePath}:ConnectionStrings").Get<ConnectionStrings>();
+
+// Optional: Register in DI container
+builder.Services.AddSingleton(saml2Settings);
+builder.Services.AddSingleton(dbConnection);
+
+// Add services (e.g., controllers)
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+var app = builder.Build();
+
+// Middleware
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+app.UseAuthorization();
+app.MapControllers();
+app.Run();
