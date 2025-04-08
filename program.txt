@@ -1,0 +1,16 @@
+var builder = WebApplication.CreateBuilder(args);
+var config = builder.Configuration;
+
+// Read current environment mode: DEV or UAT
+var envMode = config["EnvironmentSettings:EnvMode"]; // e.g., "DEV"
+
+// Build section path dynamically
+var basePath = $"EnvironmentSettings:EnvMode{envMode}";
+
+// Read ConnectionString
+var connectionString = config[$"{basePath}:ConnectionStrings:DefaultConnection"];
+Console.WriteLine($"Connection String: {connectionString}");
+
+// Read EntityId
+var entityId = config[$"{basePath}:Saml2:EntityId"];
+Console.WriteLine($"EntityId: {entityId}");
