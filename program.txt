@@ -83,3 +83,13 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
+
+
+//================================
+
+
+builder.Services.AddSingleton(saml2Settings);
+builder.Services.AddSingleton(jwtSettings);
+builder.Services.AddSingleton(dbConnection);
+builder.Services.AddSingleton(reportPath);
+builder.Services.AddSingleton(reactAppSettings);
